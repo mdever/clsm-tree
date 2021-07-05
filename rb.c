@@ -1,3 +1,4 @@
+#include "common.h"
 #include "rb.h"
 #include <stdlib.h>
 #include <string.h>
@@ -6,6 +7,21 @@
 void _left_rotate(rb_node_t *node);
 void _right_rotate(rb_node_t *node);
 void _fixup(rb_node_t *node);
+
+rb_node_t *insert_record(rb_tree_t *tree, char *key, char *value)
+{
+  if (strlen(key) > 128) {
+    perror("Key must be under 128 characters!");
+    perror(key);
+    return NULL;
+  }
+
+  record_t *record = (record_t *) malloc(sizeof(record_t));
+  strcpy(record->key, key);
+  record->value = value;
+
+  return insert(tree, record);
+}
 
 rb_node_t *_insert(rb_node_t *node, void *data)
 {
@@ -37,9 +53,11 @@ rb_node_t *_insert(rb_node_t *node, void *data)
       new_node = node->left;
     }
   } else {
+    free(node->data);
+    node->data = data;
     return node;
   }
-
+  new_node->tree->count++;
   return new_node;
 }
 

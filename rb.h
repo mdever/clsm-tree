@@ -22,6 +22,7 @@ typedef struct rb_tree {
   int (*compare)(void *left, void *right);
   int (*find)(void *first, void *second);
   struct rb_node *root;
+  int count;
 } rb_tree_t;
 
 rb_node_t *insert(rb_tree_t *tree, void *data);
@@ -29,7 +30,6 @@ bool uncle_red(rb_node_t *node);
 bool uncle_black(rb_node_t *node);
 bool right_child(rb_node_t *node);
 bool left_child(rb_node_t *node);
-rb_node_t *rotate(rb_node_t *node);
 void print_in_order(rb_tree_t *tree);
 rb_node_t *find(rb_tree_t *tree, void *value);
 

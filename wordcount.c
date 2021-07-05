@@ -121,6 +121,7 @@ int main(int argc, char *argv[])
     }
   }
 
+  printf("Done indexing %d entries.\n", words->count);
   printf("The last word of the vector is %s\n", vector_head->start[vector_head->current_size-1].word);
 
   if (argc > 2 && strcmp(argv[2], "-i") == 0) {

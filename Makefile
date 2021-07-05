@@ -7,3 +7,10 @@ wordcount: rb.o vector.o wordcount.o
 .PHONY: clean
 clean:
 	rm *.o
+	rm *.exe
+
+.PHONY: all
+all: lsmtree
+
+lsmtree: common.o rb.o vector.o main.o
+	gcc common.o rb.o vector.o main.o -lm -o lsmtree

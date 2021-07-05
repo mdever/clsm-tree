@@ -7,154 +7,108 @@
 #include <math.h>
 #include <time.h>
 
-void usage() {
-  printf("Word Count:\n");
-  printf("Count then instance of words in a document\n");
-  printf("wordcount <filename>\n");
+char *serialize(record_t *record)
+{
+  int bufsize = 1024;
+  char *valbuf = (char *) malloc(sizeof(char) * bufsize);
+  memset(valbuf, 0, bufsize);
+  valbuf[0] = '\0';
+
+  strcpy(valbuf, record->key);
+  int keylen = strlen(valbuf);
+  valbuf[keylen] = ':';
+  valbuf[keylen+1] = '\0';
+  for (int i = 0; i < strlen(record->value); i++) {
+    char nextChar[3];
+    nextChar[0] = '\0';
+    if (record->value[i] == ';') {
+      nextChar[0] = '\\';
+      nextChar[1] = ';';
+      nextChar[2] = '\0';
+    } else {
+      nextChar[0] = record->value[i];
+      nextChar[1] = '\0';
+    }
+
+    if (strlen(valbuf)+3+1 > bufsize) {
+      char *prevbuf = valbuf;
+      bufsize *= 2;
+      valbuf = (char *) malloc(sizeof(char) * bufsize);
+      memset(valbuf, 0, bufsize);
+      strcpy(valbuf, prevbuf);
+      free(prevbuf);
+    }
+
+    strcat(valbuf, nextChar);
+  }
 }
 
-void print_words(rb_node_t *node) {
+void _serialize_tree(rb_node_t *node, char **buffer, int *curlen, int *max)
+{
+  record_t *record = (record_t *) node->data;
+  int mylen = (strlen(record->key) + 1 + strlen(record->value)) * 2;
   if (node->left != NULL) {
-    print_words(node->left);
+    _serialize_tree(node->left, buffer, curlen, max);
   }
 
-  word_record_t *wr = (word_record_t *) node->data;
-  printf("Word: %s, Count: %d\n", wr->word, wr->count);
+  if (*curlen + mylen > max) {
+    char *prevbuf = *buffer;
+    *max *= 2;
+    *buffer = (char *) malloc(sizeof(char) * *max);
+    strcpy(*buffer, prevbuf);
+    free(prevbuf);
+  }
+
+  char *currkv = serialize(record);
+  mylen = strlen(currkv);
+  strcpy(*buffer, currkv);
+  free(currkv);
+
+  *curlen += mylen+1;
 
   if (node->right != NULL) {
-    print_words(node->right);
+    _serialize_tree(node->right, buffer, curlen, max);
   }
+}
+
+char *serialize_tree(rb_tree_t *tree)
+{
+  int size = 4096;
+  char *buffer = (char *) malloc(sizeof(char) * size);
+  memset(buffer, 0, size);
+  int len = 0;
+  buffer[0] = '\0';
+  if (tree->root) {
+    _serialize_tree(tree->root, &buffer, &len, &size);
+    return *buffer;
+  }
+
+  return "";
 }
 
 int main(int argc, char *argv[])
 {
+  rb_tree_t *records = (rb_tree_t *) malloc(sizeof(rb_tree_t));
+  records->compare = compare_record;
+  records->find = find_record;
+  records->root = NULL;
+  records->count = 0;
 
-  if (argc < 2) {
-    usage();
-    return 0;
+  insert_record(records, "name", "Mark");
+  insert_record(records, "age", "32");
+  insert_record(records, "job", "programmer");
+
+  rb_node_t *age = find(records, "age");
+  if (age != NULL) {
+    record_t *record = (record_t *) age->data;
+    printf("Found the variable %s and the value is %s.\n", "age", record->value);
+  } else {
+    printf("Could not find key age.\n");
   }
 
-  char *filename = argv[1];
-  char *contents = NULL;
-  long bufsize;
-  FILE *f = fopen(filename, "r");
-  if (f == NULL) {
-    printf("Could not open file %s\n", filename);
-    return -1;
-  }
-
-  if (fseek(f, 0L, SEEK_END) == 0) {
-    bufsize = ftell(f);
-    if (bufsize == -1) {
-      printf("Could not get file length\n");
-      fclose(f);
-      return -1;
-    }
-    contents = (char *) malloc(sizeof(char) * (bufsize+1));
-
-    if (fseek(f, 0L, SEEK_SET) != 0) {
-      printf("Couldn't seek back to beginning of file\n");
-      fclose(f);
-      return -1;
-    }
-
-    size_t newLen = fread(contents, sizeof(char), bufsize, f);
-    if (ferror(f) != 0) {
-      printf("Error reading file\n");
-      fclose(f);
-      return -1;
-    }
-
-    contents[newLen++] = '\0';
-    fclose(f);
-  }
-
-  rb_tree_t *words = (rb_tree_t *) malloc(sizeof(rb_tree_t));
-  words->root = NULL;
-  words->compare = compare_word_records;
-  words->find = find_word_record;
-
-  vector_head_t *vector_head = make_vector();
-
-  int power = 0;
-  int wordbuffer_size = floor(sizeof(char) * 1024 * pow(2.0, (float) power));
-  char *wordbuffer = (char *) malloc(wordbuffer_size);
-  memset(wordbuffer, 0, 1024);
-  int wordbuffer_count = 0;
-  wordbuffer[0] = '\0';
-  char *nextword;
-  for (int i = 0; i < bufsize; i++) {
-    char c = contents[i];
-    if (!isalpha(c)) {
-      if (wordbuffer_count > 0) {
-        wordbuffer[wordbuffer_count] = '\0';
-        nextword = (char *) malloc((sizeof(char) * wordbuffer_count) + 1);
-        strcpy(nextword, wordbuffer);
-        rb_node_t *wr_node = find(words, nextword);
-        if (wr_node == NULL) {
-          word_record_t *wr = (word_record_t *) malloc(sizeof(word_record_t));
-          wr->word = nextword;
-          wr->count = 1;
-          insert(words, wr);
-        } else {
-          word_record_t *wr = (word_record_t *) wr_node->data;
-          wr->count++;
-        }
-
-        word_record_t *wr = vector_find(vector_head, nextword);
-        if (wr == NULL) {
-          word_record_t vecrec;
-          vecrec.word = nextword;
-          vecrec.count = 1;
-          vector_insert(vector_head, vecrec);
-        } else {
-          wr->count++;
-        }
-
-        memset(wordbuffer, 0, wordbuffer_size);
-        wordbuffer[0] = '\0';
-        wordbuffer_count = 0;
-      }
-    } else {
-      wordbuffer[wordbuffer_count] = tolower(c);
-      wordbuffer_count++;
-    }
-  }
-
-  printf("The last word of the vector is %s\n", vector_head->start[vector_head->current_size-1].word);
-
-  if (argc > 2 && strcmp(argv[2], "-i") == 0) {
-    printf("Beginning interactive mode\n");
-    char in[128];
-    clock_t t;
-    double elapsed;
-    while (1) {
-      printf("Enter a word to search.\n");
-      gets(in);
-      printf("RedBlack Search for %s\n", in);
-      t = clock();
-      rb_node_t *node = find(words, in);
-      t = clock() - t;
-      elapsed = ((double) t) / CLOCKS_PER_SEC;
-      if (node != NULL) {
-        word_record_t *record = (word_record_t *) node->data;
-        printf("RB Count: %d\n", record->count);
-      } else {
-        printf("Could not find word: %s in rbtree\n", in);
-      }
-      printf("RB Search took %f seconds\n", elapsed);
-
-      t = clock();
-      word_record_t *vector_wr = vector_find(vector_head, in);
-      t = clock() - t;
-      elapsed = ((double) t) / CLOCKS_PER_SEC;
-      if (vector_wr != NULL) {
-        printf("Vector Count: %d\n", vector_wr->count);
-      } else {
-        printf("Could not find word: %s in vector\n", in);
-      }
-      printf("Vector Search took %f seconds\n", elapsed);
-    }
-  }
-
+  printf("Attempting to serialize...\n");
+  char *ser = serialize_tree(records);
+  printf("\n\n%s\n\n", ser);
+  free(ser);
+  return 0;
 }
