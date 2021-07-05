@@ -6,85 +6,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
-
-char *serialize(record_t *record)
-{
-  int bufsize = 1024;
-  char *valbuf = (char *) malloc(sizeof(char) * bufsize);
-  memset(valbuf, 0, bufsize);
-  valbuf[0] = '\0';
-
-  strcpy(valbuf, record->key);
-  int keylen = strlen(valbuf);
-  valbuf[keylen] = ':';
-  valbuf[keylen+1] = '\0';
-  for (int i = 0; i < strlen(record->value); i++) {
-    char nextChar[3];
-    nextChar[0] = '\0';
-    if (record->value[i] == ';') {
-      nextChar[0] = '\\';
-      nextChar[1] = ';';
-      nextChar[2] = '\0';
-    } else {
-      nextChar[0] = record->value[i];
-      nextChar[1] = '\0';
-    }
-
-    if (strlen(valbuf)+3+1 > bufsize) {
-      char *prevbuf = valbuf;
-      bufsize *= 2;
-      valbuf = (char *) malloc(sizeof(char) * bufsize);
-      memset(valbuf, 0, bufsize);
-      strcpy(valbuf, prevbuf);
-      free(prevbuf);
-    }
-
-    strcat(valbuf, nextChar);
-  }
-}
-
-void _serialize_tree(rb_node_t *node, char **buffer, int *curlen, int *max)
-{
-  record_t *record = (record_t *) node->data;
-  int mylen = (strlen(record->key) + 1 + strlen(record->value)) * 2;
-  if (node->left != NULL) {
-    _serialize_tree(node->left, buffer, curlen, max);
-  }
-
-  if (*curlen + mylen > max) {
-    char *prevbuf = *buffer;
-    *max *= 2;
-    *buffer = (char *) malloc(sizeof(char) * *max);
-    strcpy(*buffer, prevbuf);
-    free(prevbuf);
-  }
-
-  char *currkv = serialize(record);
-  mylen = strlen(currkv);
-  strcpy(*buffer, currkv);
-  free(currkv);
-
-  *curlen += mylen+1;
-
-  if (node->right != NULL) {
-    _serialize_tree(node->right, buffer, curlen, max);
-  }
-}
-
-char *serialize_tree(rb_tree_t *tree)
-{
-  int size = 4096;
-  char *buffer = (char *) malloc(sizeof(char) * size);
-  memset(buffer, 0, size);
-  int len = 0;
-  buffer[0] = '\0';
-  if (tree->root) {
-    _serialize_tree(tree->root, &buffer, &len, &size);
-    return *buffer;
-  }
-
-  return "";
-}
+#include "serde.h"
 
 int main(int argc, char *argv[])
 {
@@ -97,6 +19,7 @@ int main(int argc, char *argv[])
   insert_record(records, "name", "Mark");
   insert_record(records, "age", "32");
   insert_record(records, "job", "programmer");
+  insert_record(records, "additionalInterests", "{\"first\": \"cycling\"}");
 
   rb_node_t *age = find(records, "age");
   if (age != NULL) {
@@ -107,8 +30,29 @@ int main(int argc, char *argv[])
   }
 
   printf("Attempting to serialize...\n");
-  char *ser = serialize_tree(records);
-  printf("\n\n%s\n\n", ser);
+  int len;
+  char *ser = serialize_tree(records, &len);
+  FILE *f = fopen("./serialized.bin", "wb");
+  if (f == NULL) {
+    printf("Could not open file for writing.\n");
+    return 0;
+  }
+
+  fwrite(ser, sizeof(char), len, f);
+  fclose(f);
   free(ser);
+
+  f = fopen("./serialized.bin", "rb");
+  fseek(f, 0L, SEEK_END);
+  int sz = ftell(f);
+  fseek(f, 0L, SEEK_SET);
+  char *contents = (char *) malloc(sizeof(char) * sz);
+  memset(contents, 0, sz);
+
+  fread(contents, 1, sz, f);
+
+  rb_tree_t *t = deserialize(contents, sz);
+  print_records(t);
+
   return 0;
 }

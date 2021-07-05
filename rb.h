@@ -32,5 +32,6 @@ bool right_child(rb_node_t *node);
 bool left_child(rb_node_t *node);
 void print_in_order(rb_tree_t *tree);
 rb_node_t *find(rb_tree_t *tree, void *value);
+void print_records(rb_tree_t *tree);
 
 #endif

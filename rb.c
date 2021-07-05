@@ -69,6 +69,7 @@ rb_node_t *insert(rb_tree_t *tree, void *data)
     tree->root->data = data;
     tree->root->tree = tree;
     tree->root->color = BLACK;
+    tree->count++;
     return tree->root;
   }
 
@@ -271,4 +272,23 @@ rb_node_t *find(rb_tree_t *tree, void *value) {
     return NULL;
   }
   return _find(tree, root, value);
+}
+
+void _print_records(rb_node_t *node)
+{
+  if (node->left != NULL)
+    _print_records(node->left);
+
+  record_t *record = (record_t *) node->data;
+  printf("Key: %s, Value: %s\n", record->key, record->value);
+
+  if (node->right != NULL)
+    _print_records(node->right);
+}
+
+void print_records(rb_tree_t *tree)
+{
+  if (tree->root != NULL) {
+    _print_records(tree->root);
+  }
 }
