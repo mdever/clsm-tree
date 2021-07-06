@@ -1,4 +1,4 @@
-#include "common.h"
+#include "record.h"
 #include "rb.h"
 #include "vector.h"
 #include <stdlib.h>

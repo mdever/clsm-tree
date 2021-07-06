@@ -15,5 +15,5 @@ all: lsmtree
 tests:
 	echo "Not Implemented"
 
-lsmtree: build/common.o build/serde.o build/rb.o build/vector.o build/main.o
-	gcc -g -I./headers build/common.o build/serde.o build/rb.o build/vector.o build/main.o -lm -o build/lsmtree
+lsmtree: build/record.o build/serde.o build/rb.o build/vector.o build/main.o
+	gcc -g -I./headers build/record.o build/serde.o build/rb.o build/vector.o build/main.o -lm -o build/lsmtree

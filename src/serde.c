@@ -1,23 +1,29 @@
 #include "serde.h"
-#include "common.h"
+#include "record.h"
 #include "rb.h"
 #include <string.h>
 
-void serialize_int(unsigned int number, char *place)
+void serialize_int(unsigned int number, unsigned char *place)
 {
   unsigned char byte1 = (number & 0xff);
   unsigned char byte2 = (number & 0xff00) >> 8;
   unsigned char byte3 = (number & 0xff0000) >> 16;
   unsigned char byte4 = (number & 0xff000000) >> 24;
-  sprintf(place, "%c%c%c%c", byte1, byte2, byte3, byte4);
+  place[0] = byte1;
+  place[1] = byte2;
+  place[2] = byte3;
+  place[3] = byte4;
 }
 
-unsigned int recover_int(char *serialized)
+unsigned int recover_int(unsigned char *serialized)
 {
   unsigned int out;
   unsigned char byte1 = 0, byte2 = 0, byte3 = 0, byte4 = 0;
   unsigned int int1 = 0, int2 = 0, int3 = 0, int4 = 0;
-  sscanf(serialized, "%c%c%c%c", &byte1, &byte2, &byte3, &byte4);
+  byte1 = serialized[0];
+  byte2 = serialized[1];
+  byte3 = serialized[2];
+  byte4 = serialized[3];
   int1 = ((unsigned int)  byte1)        & 0x000000ff;
   int2 = (((unsigned int) byte2) << 8)  & 0x0000ff00;
   int3 = (((unsigned int) byte3) << 16) & 0x00ff0000;
@@ -33,8 +39,14 @@ char *serialize(record_t *record, int *size)
   int totalsize = keysize + valsize + 4 + 4;
   char *buffer = (char *) malloc(sizeof(char) * totalsize);
   memset(buffer, 0, totalsize);
-  char ckeysize[4];
-  char cvalsize[4];
+  unsigned char ckeysize[4];
+  char nothing = 'n';
+  unsigned char cvalsize[4];
+
+  for (int i = 0; i < 4; i++) {
+    ckeysize[i] = '\0';
+    cvalsize[i] = '\0';
+  }
   
   serialize_int(keysize, ckeysize);
   serialize_int(valsize, cvalsize);

@@ -23,33 +23,39 @@ hashmap_t *hm_create()
     return hm;
 }
 
-hm_bucket_t *hm_put(hashmap_t *hm, char *key, int value)
+hm_bucket_t *hm_put(hashmap_t *hm, char *key, char *filename, unsigned int offset)
 {
     int hash = hash_key(key, hm->capacity);
     if (strcmp(hm->buckets[hash].key, "") == 0) {
         strcpy(&hm->buckets[hash].key, key);
-        hm->buckets[hash].value = value;
+        strcpy(&hm->buckets[hash].mapping.filename, filename);
+        hm->buckets[hash].mapping.offset = offset;
         hm->buckets[hash].next = NULL;
         return &hm->buckets[hash];
     } else if (strcmp(hm->buckets[hash].key, key) == 0) {
-        hm->buckets[hash].value = value;
+        strcpy(&hm->buckets[hash].mapping.filename, filename);
+        hm->buckets[hash].mapping.offset = offset;
         return &hm->buckets[hash];
     } else {
         hm_bucket_t *bucket = &hm->buckets[hash];
-        while (bucket->next != NULL) {
+        while (bucket->next != NULL && (strcmp(bucket->key, key) != 0)) {
             bucket = bucket->next;
         }
+        
+        if (strcmp(bucket->key, key) != 0) {
+            bucket->next = (hm_bucket_t *) malloc(sizeof(hm_bucket_t));
+            bucket = bucket->next;
+            strcpy(bucket->key, key);
+            bucket->next = NULL;
+        }
 
-        bucket->next = (hm_bucket_t *) malloc(sizeof(hm_bucket_t));
-        bucket = bucket->next;
-        strcpy(bucket->key, key);
-        bucket->value = value;
-        bucket->next = NULL;
+        strcpy(bucket->mapping.filename, filename);
+        bucket->mapping.offset = offset;
         return bucket;
     }
 }
 
-int *hm_get(hashmap_t *hm, char *key)
+file_mapping_t *hm_get(hashmap_t *hm, char *key)
 {
     int hash = hash_key(key, hm->capacity);
     hm_bucket_t *bucket = &hm->buckets[hash];
@@ -58,13 +64,13 @@ int *hm_get(hashmap_t *hm, char *key)
     }
 
     if (strcmp(bucket->key, key) == 0) {
-        return &bucket->value;
+        return &bucket->mapping;
     }
 
     while (bucket->next != NULL) {
         bucket = bucket->next;
         if (strcmp(bucket->key, key) == 0) {
-            return &bucket->value;
+            return &bucket->mapping;
         }
     }
 

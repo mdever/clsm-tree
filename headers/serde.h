@@ -3,8 +3,8 @@
 
 #include "rb.h"
 
-void serialize_int(unsigned int number, char *place);
-unsigned int recover_int(char *serialized);
+void serialize_int(unsigned int number, unsigned char *place);
+unsigned int recover_int(unsigned char *serialized);
 char *serialize_tree(rb_tree_t *tree, int *totallen);
 rb_tree_t *deserialize(char *contents, int length);
 

@@ -7,3 +7,4 @@ GTAGS
 *.exe
 build/*
 !build/.gitkeep
+.vscode

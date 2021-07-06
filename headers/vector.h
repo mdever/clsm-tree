@@ -1,7 +1,7 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
-#include "common.h"
+#include "record.h"
 #define INITIAL_SIZE 1024
 
 typedef struct vector_head {

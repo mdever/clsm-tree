@@ -1,4 +1,4 @@
-#include "common.h"
+#include "record.h"
 
 int compare_record(void *first, void *second)
 {
