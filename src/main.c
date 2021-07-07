@@ -7,6 +7,7 @@
 #include <math.h>
 #include <time.h>
 #include "serde.h"
+#include "lsmt.h"
 
 int main(int argc, char *argv[])
 {
@@ -53,6 +54,10 @@ int main(int argc, char *argv[])
 
   rb_tree_t *t = deserialize(contents, sz);
   print_records(t);
+
+  lsmtree_t lsmt;
+  lsmtree_create(&lsmt, "./db");
+  lsmtree_close(&lsmt);
 
   return 0;
 }

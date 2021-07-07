@@ -77,7 +77,23 @@ file_mapping_t *hm_get(hashmap_t *hm, char *key)
     return NULL;
 }
 
+void _free_bucket(hm_bucket_t *bucket)
+{
+    if (bucket->next != NULL) {
+        _free_bucket(bucket->next);
+    }
+
+    free(bucket);
+}
+
 void hm_free(hashmap_t *hm)
 {
-
+    for (int i = 0; i < hm->capacity; i++) {
+        hm_bucket_t *bucket = hm->buckets[i].next;
+        if (bucket != NULL) {
+            _free_bucket(bucket);
+        }
+    }
+    free(hm->buckets);
+    free(hm);
 }
