@@ -1,5 +1,6 @@
 #ifndef RB_H
 #define RB_H
+#include "record.h"
 #include <stdbool.h>
 
 enum rb_color {
@@ -25,13 +26,11 @@ typedef struct rb_tree {
   int count;
 } rb_tree_t;
 
-rb_node_t *insert(rb_tree_t *tree, void *data);
-bool uncle_red(rb_node_t *node);
-bool uncle_black(rb_node_t *node);
-bool right_child(rb_node_t *node);
-bool left_child(rb_node_t *node);
-void print_in_order(rb_tree_t *tree);
-rb_node_t *find(rb_tree_t *tree, void *value);
+rb_node_t *rb_insert(rb_tree_t *tree, void *data);
+void *rb_delete(rb_tree_t *tree, void *data);
+void rb_print_in_order(rb_tree_t *tree);
+rb_node_t *rb_find(rb_tree_t *tree, void *value);
 void print_records(rb_tree_t *tree);
+rb_node_t *insert_record(rb_tree_t *tree, char *key, char *value);
 
 #endif

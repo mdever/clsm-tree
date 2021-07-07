@@ -17,7 +17,7 @@ typedef struct record {
 } record_t;
 
 int compare_record(void *first, void *second);
-
 int find_record(void *first, void *second);
+
 #endif // COMMON_H
 

@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
   insert_record(records, "job", "programmer");
   insert_record(records, "additionalInterests", "{\"first\": \"cycling\"}");
 
-  rb_node_t *age = find(records, "age");
+  rb_node_t *age = rb_find(records, "age");
   if (age != NULL) {
     record_t *record = (record_t *) age->data;
     printf("Found the variable %s and the value is %s.\n", "age", record->value);
@@ -58,6 +58,11 @@ int main(int argc, char *argv[])
   lsmtree_t lsmt;
   lsmtree_create(&lsmt, "./db");
   lsmtree_close(&lsmt);
+
+  char *message = "Hello there!\n";
+  printf(message);
+  free(message);
+  printf("message has been freed\n");
 
   return 0;
 }

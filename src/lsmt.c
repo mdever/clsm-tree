@@ -62,8 +62,18 @@ bool lsmtree_close(lsmtree_t *lsm)
     hm_free(&lsm->hm);
 }
 
+void wal_write(lsmtree_t *lsm, char *key, char *value)
+{
+
+}
+
 // bool lsmtree_open(char *basedir, lsmtree *lsm);
-// bool lsmtree_put(lsmtree *lsm, char *key, char *value);
+bool lsmtree_put(lsmtree_t *lsm, char *key, char *value)
+{
+    bloom_put(&lsm->bloom_filter, key);
+    wal_write(lsm, key, value);
+    insert_record(&lsm->rb, key, value);
+}
 // char *lsmtree_get(lsmtree *lsm, char *key);
 // bool lsmtree_remove(lsmtree *lsm, char *key);
 // bool lsmtree_close(lsmtree *lsm);

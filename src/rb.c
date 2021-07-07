@@ -7,6 +7,10 @@
 void _left_rotate(rb_node_t *node);
 void _right_rotate(rb_node_t *node);
 void _fixup(rb_node_t *node);
+bool uncle_red(rb_node_t *node);
+bool uncle_black(rb_node_t *node);
+bool right_child(rb_node_t *node);
+bool left_child(rb_node_t *node);
 
 rb_node_t *insert_record(rb_tree_t *tree, char *key, char *value)
 {
@@ -20,7 +24,7 @@ rb_node_t *insert_record(rb_tree_t *tree, char *key, char *value)
   strcpy(record->key, key);
   record->value = value;
 
-  return insert(tree, record);
+  return rb_insert(tree, record);
 }
 
 rb_node_t *_insert(rb_node_t *node, void *data)
@@ -61,7 +65,7 @@ rb_node_t *_insert(rb_node_t *node, void *data)
   return new_node;
 }
 
-rb_node_t *insert(rb_tree_t *tree, void *data)
+rb_node_t *rb_insert(rb_tree_t *tree, void *data)
 {
   if (tree->root == NULL) {
     tree->root = (rb_node_t *) malloc(sizeof(rb_node_t));
@@ -266,7 +270,7 @@ rb_node_t *_find(rb_tree_t *tree, rb_node_t *node, void *value) {
   }
 }
 
-rb_node_t *find(rb_tree_t *tree, void *value) {
+rb_node_t *rb_find(rb_tree_t *tree, void *value) {
   rb_node_t *root = tree->root;
   if (root == NULL) {
     return NULL;
@@ -291,4 +295,36 @@ void print_records(rb_tree_t *tree)
   if (tree->root != NULL) {
     _print_records(tree->root);
   }
+}
+
+void *_rb_delete(rb_node_t *node, void *d)
+{
+  int cmp = node->tree->compare(node->data, d);
+  if (cmp > 0) {
+    if (node->left == NULL)
+      return NULL;
+    return _rb_delete(node->left, d);
+  } else if (cmp < 0) {
+    if (node->right == NULL)
+      return NULL;
+    return _rb_delete(node->right, d);
+  } else {
+    rb_node_t *left = node->left;
+    rb_node_t *right = node->right;
+    rb_node_t *parent = node->parent;
+    if (parent != NULL && node == parent->right) {
+
+    } else if (parent != NULL && node == parent->left) {
+
+    }
+  }
+}
+
+void *rb_delete(rb_tree_t *tree, void *data)
+{
+  if (tree->root) {
+    return _rb_delete(tree->root, data);
+  }
+
+  return NULL;
 }
