@@ -2,6 +2,7 @@
 #define SERDE_H
 
 #include "rb.h"
+#include "record.h"
 
 void *serialize(record_t *record, int *size);
 void serialize_int(unsigned int number, unsigned char *place);

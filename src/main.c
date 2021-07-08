@@ -11,68 +11,26 @@
 
 int main(int argc, char *argv[])
 {
-  rb_tree_t *records = (rb_tree_t *) malloc(sizeof(rb_tree_t));
-  records->compare = compare_record;
-  records->find = find_record;
-  records->root = NULL;
-  records->count = 0;
 
-  insert_record(records, "name", "Mark");
-  insert_record(records, "age", "32");
-  insert_record(records, "job", "programmer");
-  insert_record(records, "additionalInterests", "{\"first\": \"cycling\"}");
+  lsmtree_t lsm;
+  lsmtree_create(&lsm, "./db");
+  lsmtree_put(&lsm, "name", "Mark");
+  lsmtree_put(&lsm, "age", "32");
+  lsmtree_put(&lsm, "name", "Mark Disbrow");
+  lsmtree_close(&lsm);
 
-  rb_node_t *age = rb_find(records, "age");
-  if (age != NULL) {
-    record_t *record = (record_t *) age->data;
-    printf("Found the variable %s and the value is %s.\n", "age", record->value);
-  } else {
-    printf("Could not find key age.\n");
-  }
+  FILE *f = fopen("./db/wal.log", "rb");
+  size_t len;
+  fseek(f, 0, SEEK_CUR);
+  len = ftell(f);
+  fseek(f, 0, SEEK_SET);
 
-  printf("Attempting to serialize...\n");
-  int len;
-  char *ser = serialize_tree(records, &len);
-  FILE *f = fopen("./serialized.bin", "wb");
-  if (f == NULL) {
-    printf("Could not open file for writing.\n");
-    return 0;
-  }
-
-  fwrite(ser, sizeof(char), len, f);
+  char *buf = (char *) malloc(sizeof(char) * len);
+  fread(buf, sizeof(char), len, f);
+  rb_tree_t *t = deserialize(buf, len);
   fclose(f);
-  free(ser);
 
-  f = fopen("./serialized.bin", "rb");
-  fseek(f, 0L, SEEK_END);
-  int sz = ftell(f);
-  fseek(f, 0L, SEEK_SET);
-  char *contents = (char *) malloc(sizeof(char) * sz);
-  memset(contents, 0, sz);
-
-  fread(contents, 1, sz, f);
-
-  rb_tree_t *t = deserialize(contents, sz);
   print_records(t);
-
-  lsmtree_t lsmt;
-  lsmtree_create(&lsmt, "./db");
-
-  lsmtree_put(&lsmt, "mark", "{\"name\": {\"first\": \"Mark\", \"last\": \"Disbrow\"}, \"age\": 32}");
-  lsmtree_put(&lsmt, "job", "Programmer");
-  lsmtree_put(&lsmt, "job", "Consultant");
-  lsmtree_close(&lsmt);
-
-  FILE *wal_file = fopen("./db/wal.log", "rb");
-  size_t l;
-  fseek(wal_file, 0, SEEK_END);
-  l = ftell(wal_file);
-  fseek(wal_file, 0, SEEK_SET);
-  char *buf = (char *) malloc(sizeof(char) * l);
-  memset(buf, 0, l);
-  fread(buf, l, sizeof(char), wal_file);
-  rb_tree_t *t2 = deserialize(buf, l);
-  print_records(t2);
 
 
   return 0;

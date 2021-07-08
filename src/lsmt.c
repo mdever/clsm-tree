@@ -15,6 +15,8 @@
 #define mkdir(A, B) mkdir(A)
 #endif
 
+#define FLUSH_COUNT 1024 * 1024 * 64
+
 bool lsmtree_create(lsmtree_t *lsm, char *basedir)
 {
     int dirlen = strlen(basedir);
@@ -85,6 +87,9 @@ bool lsmtree_put(lsmtree_t *lsm, char *key, char *value)
     bloom_put(&lsm->bloom_filter, key);
     wal_write(lsm, key, value);
     insert_record(&lsm->rb, key, value);
+    if (lsm->rb.count > FLUSH_COUNT) {
+
+    }
     return true;
 }
 // char *lsmtree_get(lsmtree *lsm, char *key);

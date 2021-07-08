@@ -278,25 +278,6 @@ rb_node_t *rb_find(rb_tree_t *tree, void *value) {
   return _find(tree, root, value);
 }
 
-void _print_records(rb_node_t *node)
-{
-  if (node->left != NULL)
-    _print_records(node->left);
-
-  record_t *record = (record_t *) node->data;
-  printf("Key: %s, Value: %s\n", record->key, record->value);
-
-  if (node->right != NULL)
-    _print_records(node->right);
-}
-
-void print_records(rb_tree_t *tree)
-{
-  if (tree->root != NULL) {
-    _print_records(tree->root);
-  }
-}
-
 void *_rb_delete(rb_node_t *node, void *d)
 {
   int cmp = node->tree->compare(node->data, d);

@@ -70,7 +70,7 @@ void _serialize_tree(rb_node_t *node, char **buffer, int *curlen, int *max)
   record_t *record = (record_t *) node->data;
   int mylen;
   char *currkv = (char *) serialize(record, &mylen);
-  if (*curlen + mylen > max) {
+  if (*curlen + mylen > *max) {
     char *prevbuf = *buffer;
     int prevmax = *max;
     *max *= 2;
@@ -111,11 +111,7 @@ rb_tree_t *deserialize(char *contents, int length)
     unsigned int keylen;
     unsigned int vallen;
     unsigned int nextentry = 0;
-    rb_tree_t *records = (rb_tree_t *) malloc(sizeof(rb_tree_t));
-    records->compare = compare_record;
-    records->find = find_record;
-    records->root = NULL;
-    records->count = 0;
+    rb_tree_t *records = record_tree_create();
 
     while (nextentry < length) {
         keylen = recover_int((char *) &contents[nextentry]);
