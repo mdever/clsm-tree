@@ -95,5 +95,4 @@ void hm_free(hashmap_t *hm)
         }
     }
     free(hm->buckets);
-    free(hm);
 }

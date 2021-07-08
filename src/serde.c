@@ -2,6 +2,8 @@
 #include "record.h"
 #include "rb.h"
 #include <string.h>
+#include <stdlib.h>
+#include <memory.h>
 
 void serialize_int(unsigned int number, unsigned char *place)
 {
@@ -32,15 +34,14 @@ unsigned int recover_int(unsigned char *serialized)
   return out;
 }
 
-char *serialize(record_t *record, int *size)
+void *serialize(record_t *record, int *size)
 {
   int keysize = strlen(record->key);
   int valsize = strlen(record->value);
   int totalsize = keysize + valsize + 4 + 4;
-  char *buffer = (char *) malloc(sizeof(char) * totalsize);
+  void *buffer = (void *) malloc(sizeof(char) * totalsize);
   memset(buffer, 0, totalsize);
   unsigned char ckeysize[4];
-  char nothing = 'n';
   unsigned char cvalsize[4];
 
   for (int i = 0; i < 4; i++) {
@@ -68,7 +69,7 @@ void _serialize_tree(rb_node_t *node, char **buffer, int *curlen, int *max)
 
   record_t *record = (record_t *) node->data;
   int mylen;
-  char *currkv = serialize(record, &mylen);
+  char *currkv = (char *) serialize(record, &mylen);
   if (*curlen + mylen > max) {
     char *prevbuf = *buffer;
     int prevmax = *max;

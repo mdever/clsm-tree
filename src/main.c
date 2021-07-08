@@ -57,12 +57,23 @@ int main(int argc, char *argv[])
 
   lsmtree_t lsmt;
   lsmtree_create(&lsmt, "./db");
+
+  lsmtree_put(&lsmt, "mark", "{\"name\": {\"first\": \"Mark\", \"last\": \"Disbrow\"}, \"age\": 32}");
+  lsmtree_put(&lsmt, "job", "Programmer");
+  lsmtree_put(&lsmt, "job", "Consultant");
   lsmtree_close(&lsmt);
 
-  char *message = "Hello there!\n";
-  printf(message);
-  free(message);
-  printf("message has been freed\n");
+  FILE *wal_file = fopen("./db/wal.log", "rb");
+  size_t l;
+  fseek(wal_file, 0, SEEK_END);
+  l = ftell(wal_file);
+  fseek(wal_file, 0, SEEK_SET);
+  char *buf = (char *) malloc(sizeof(char) * l);
+  memset(buf, 0, l);
+  fread(buf, l, sizeof(char), wal_file);
+  rb_tree_t *t2 = deserialize(buf, l);
+  print_records(t2);
+
 
   return 0;
 }

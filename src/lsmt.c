@@ -31,7 +31,8 @@ bool lsmtree_create(lsmtree_t *lsm, char *basedir)
     lsm->rb.compare = compare_record;
     lsm->rb.find = find_record;
     lsm->nsegments = 0;
-    mkdir(basedir, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+    umask(0);
+    mkdir(basedir, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH);
 
     char walfile_name[512];
     strcpy(walfile_name, basedir);
@@ -54,6 +55,9 @@ bool lsmtree_create(lsmtree_t *lsm, char *basedir)
 
 bool lsmtree_close(lsmtree_t *lsm)
 {
+    //
+    // Dump rb in to new segment
+    //
     fclose(lsm->wal_file);
     for (int i = 0; i < lsm->nsegments; i++) {
         fclose(lsm->segments[i]);
@@ -64,7 +68,15 @@ bool lsmtree_close(lsmtree_t *lsm)
 
 void wal_write(lsmtree_t *lsm, char *key, char *value)
 {
-
+    record_t record;
+    strcpy(&record.key, key);
+    record.value = value;
+    int size = 0;
+    void *ser = NULL;
+    ser = serialize(&record, &size);
+    fwrite(ser, sizeof(char), size, lsm->wal_file);
+    fflush(lsm->wal_file);
+    free(ser);
 }
 
 // bool lsmtree_open(char *basedir, lsmtree *lsm);
@@ -73,6 +85,7 @@ bool lsmtree_put(lsmtree_t *lsm, char *key, char *value)
     bloom_put(&lsm->bloom_filter, key);
     wal_write(lsm, key, value);
     insert_record(&lsm->rb, key, value);
+    return true;
 }
 // char *lsmtree_get(lsmtree *lsm, char *key);
 // bool lsmtree_remove(lsmtree *lsm, char *key);
